@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Life Tracker</title>
+<!-- ✅ Chart.js CDN (works with Live Server) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #141E30, #243B55);
+    color: #fff;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  h1 {
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 2rem;
+  }
+
+  /* === MAIN LAYOUT === */
+  .main-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 25px;
+    width: 100%;
+    max-width: 1200px;
+  }
+
+  .section {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 20px;
+    flex: 1;
+    min-width: 300px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  .section h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  /* === FORM SECTION === */
+  .activity {
+    margin-bottom: 15px;
+  }
+
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+
+  input {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    background-color: #00bcd4;
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background-color: #0097a7;
+  }
+
+  /* === SUMMARY SECTION === */
+  .summary-item {
+    margin-bottom: 12px;
+  }
+
+  .bar {
+    height: 10px;
+    border-radius: 5px;
+    margin-top: 5px;
+    background: #555;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: #00e676;
+    width: 0;
+    transition: width 0.5s;
+  }
+
+  /* === CHART SECTION === */
+  canvas {
+    width: 100%;
+    max-width: 350px;
+    margin: auto;
+    display: block;
+  }
+
+  /* === FOOTER === */
+  .footer {
+    margin-top: 30px;
+    font-size: 0.9rem;
+    color: #ccc;
+    text-align: center;
+  }
+
+  /* === RESPONSIVE DESIGN === */
+  @media (max-width: 900px) {
+    .main-container {
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <h1>🌟 Daily Life Tracker</h1>
+
+  <div class="main-container">
+
+    <!-- Input Form -->
+    <div class="section" id="form-section">
+      <h2>📝 Enter Your Time</h2>
+      <div class="activity"><label>Listening (mins):</label><input type="number" id="listening" placeholder="30"></div>
+      <div class="activity"><label>Reading (mins):</label><input type="number" id="reading" placeholder="30"></div>
+      <div class="activity"><label>Learning (mins):</label><input type="number" id="learning" placeholder="60"></div>
+      <div class="activity"><label>Practice (mins):</label><input type="number" id="practice" placeholder="60"></div>
+      <div class="activity"><label>Coding (mins):</label><input type="number" id="coding" placeholder="120"></div>
+      <div class="activity"><label>Others (mins):</label><input type="number" id="others" placeholder="120"></div>
+      <button id="saveButton">💾 Save & Track</button>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" id="summary-section">
+      <h2>📊 Summary</h2>
+      <div id="summary-content"></div>
+    </div>
+
+    <!-- Chart -->
+    <div class="section" id="chart-section">
+      <h2>🧭 Time Distribution</h2>
+      <canvas id="timeChart"></canvas>
+    </div>
+
+  </div>
+
+  <div class="footer">Data auto-saves in your browser 💾</div>
+
+<!-- === SCRIPT === -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const activities = ["listening", "reading", "learning", "practice", "coding", "others"];
+  const goals = { listening: 30, reading: 30, learning: 60, practice: 60, coding: 120, others: 120 };
+  let chartInstance = null;
+
+  // === Save user input ===
+  function saveData() {
+    const data = {};
+    activities.forEach(act => {
+      data[act] = parseInt(document.getElementById(act).value) || 0;
+    });
+    localStorage.setItem("dailyTracker", JSON.stringify(data));
+    showSummary();
+  }
+
+  // === Display summary ===
+  function showSummary() {
+    const savedData = JSON.parse(localStorage.getItem("dailyTracker")) || {};
+    const summary = document.getElementById("summary-content");
+    summary.innerHTML = "";
+
+    activities.forEach(act => {
+      const value = savedData[act] || 0;
+      const percentage = Math.min((value / goals[act]) * 100, 100);
+      const div = document.createElement("div");
+      div.classList.add("summary-item");
+      div.innerHTML = `
+        <strong>${act.charAt(0).toUpperCase() + act.slice(1)}:</strong> ${value} / ${goals[act]} mins
+        <div class="bar"><div class="bar-fill" style="width:${percentage}%"></div></div>
+      `;
+      summary.appendChild(div);
+    });
+
+    updateChart(savedData);
+  }
+
+  // === Create or update Pie Chart ===
+  function updateChart(data) {
+    const values = activities.map(a => data[a] || 0);
+    const ctx = document.getElementById("timeChart").getContext("2d");
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: activities.map(a => a.charAt(0).toUpperCase() + a.slice(1)),
+        datasets: [{
+          data: values,
+          backgroundColor: [
+            "#00E676", "#FFEA00", "#29B6F6", "#AB47BC", "#FF7043", "#9CCC65"
+          ],
+          borderColor: "#fff",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: "white" }
+          }
+        }
+      }
+    });
+  }
+
+  // === Load previous data ===
+  showSummary();
+
+  // === Button event ===
+  document.getElementById("saveButton").addEventListener("click", saveData);
+});
+</script>
+</body>
+</html>
