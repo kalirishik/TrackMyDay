@@ -26,7 +26,6 @@
     font-size: 2rem;
   }
 
-  /* === MAIN LAYOUT === */
   .main-container {
     display: flex;
     flex-wrap: wrap;
@@ -50,7 +49,6 @@
     margin-bottom: 15px;
   }
 
-  /* === FORM SECTION === */
   .activity {
     margin-bottom: 15px;
   }
@@ -86,7 +84,6 @@
     background-color: #0097a7;
   }
 
-  /* === SUMMARY SECTION === */
   .summary-item {
     margin-bottom: 12px;
   }
@@ -106,7 +103,6 @@
     transition: width 0.5s;
   }
 
-  /* === CHART SECTION === */
   canvas {
     width: 100%;
     max-width: 350px;
@@ -114,7 +110,6 @@
     display: block;
   }
 
-  /* === FOOTER === */
   .footer {
     margin-top: 30px;
     font-size: 0.9rem;
@@ -122,7 +117,6 @@
     text-align: center;
   }
 
-  /* === RESPONSIVE DESIGN === */
   @media (max-width: 900px) {
     .main-container {
       flex-direction: column;
@@ -142,6 +136,7 @@
       <h2>📝 Enter Your Time</h2>
       <div class="activity"><label>Listening (mins):</label><input type="number" id="listening" placeholder="30"></div>
       <div class="activity"><label>Reading (mins):</label><input type="number" id="reading" placeholder="30"></div>
+      <div class="activity"><label>Writing (mins):</label><input type="number" id="writing" placeholder="30"></div>
       <div class="activity"><label>Learning (mins):</label><input type="number" id="learning" placeholder="60"></div>
       <div class="activity"><label>Practice (mins):</label><input type="number" id="practice" placeholder="60"></div>
       <div class="activity"><label>Coding (mins):</label><input type="number" id="coding" placeholder="120"></div>
@@ -168,11 +163,20 @@
 <!-- === SCRIPT === -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const activities = ["listening", "reading", "learning", "practice", "coding", "others"];
-  const goals = { listening: 30, reading: 30, learning: 60, practice: 60, coding: 120, others: 120 };
+  // ✅ Added 'writing' to activities and goals
+  const activities = ["listening", "reading", "learning", "practice", "coding", "writing", "others"];
+  const goals = { 
+    listening: 30, 
+    reading: 30, 
+    learning: 60, 
+    practice: 60, 
+    coding: 120, 
+    writing: 45, 
+    others: 120 
+  };
+
   let chartInstance = null;
 
-  // === Save user input ===
   function saveData() {
     const data = {};
     activities.forEach(act => {
@@ -182,7 +186,6 @@ document.addEventListener("DOMContentLoaded", function () {
     showSummary();
   }
 
-  // === Display summary ===
   function showSummary() {
     const savedData = JSON.parse(localStorage.getItem("dailyTracker")) || {};
     const summary = document.getElementById("summary-content");
@@ -203,7 +206,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateChart(savedData);
   }
 
-  // === Create or update Pie Chart ===
   function updateChart(data) {
     const values = activities.map(a => data[a] || 0);
     const ctx = document.getElementById("timeChart").getContext("2d");
@@ -217,7 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
         datasets: [{
           data: values,
           backgroundColor: [
-            "#00E676", "#FFEA00", "#29B6F6", "#AB47BC", "#FF7043", "#9CCC65"
+            "#00E676", "#FFEA00", "#29B6F6", "#AB47BC", "#FF7043", "#F06292", "#9CCC65"
           ],
           borderColor: "#fff",
           borderWidth: 2
@@ -235,13 +237,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // === Load previous data ===
   showSummary();
-
-  // === Button event ===
   document.getElementById("saveButton").addEventListener("click", saveData);
 });
 </script>
 </body>
 </html>
-
